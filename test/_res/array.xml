@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<root>
+    <good_guy>
+        <name>Luke Skywalker</name>
+        <weapon>Lightsaber</weapon>
+    </good_guy>
+    <good_guy>
+        <name>Gandalf</name>
+        <weapon>Staff</weapon>
+    </good_guy>
+</root>

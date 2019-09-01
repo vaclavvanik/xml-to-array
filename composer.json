@@ -1,0 +1,43 @@
+{
+  "name": "vaclavvanik/xml-to-array",
+  "description": "Convert xml to array",
+  "license": "MIT",
+  "type": "library",
+  "homepage": "https://github.com/vaclavvanik/xml-to-array",
+  "keywords": [
+    "convert",
+    "array",
+    "xml"
+  ],
+  "authors": [
+    {
+      "name": "Václav Vaník",
+      "email": "vaclav.vanik@gmail.com"
+    }
+  ],
+  "config": {
+    "sort-packages": true
+  },
+  "require": {
+    "php": "^7.3",
+    "ext-dom": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "VaclavVanik\\XmlToArray\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "VaclavVanikTest\\XmlToArray\\": "test/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0.x-dev"
+    }
+  }
+}

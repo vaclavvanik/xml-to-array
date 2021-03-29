@@ -19,7 +19,7 @@
     "sort-packages": true
   },
   "require": {
-    "php": "^7.3",
+    "php": "^7.3 || ^8.0",
     "ext-dom": "*"
   },
   "require-dev": {
@@ -37,7 +37,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "1.0.x-dev"
+      "dev-master": "1.1.x-dev"
     }
   }
 }

@@ -7,9 +7,19 @@ use DOMException;
 use PHPUnit\Framework\TestCase;
 use VaclavVanik\XmlToArray\XmlToArray;
 
+use function file_get_contents;
+
 class XmlToArrayTest extends TestCase
 {
-    public function testConstructor()
+    private function domFromFile(string $file) : DOMDocument
+    {
+        $doc = new DOMDocument();
+        $doc->load($file);
+
+        return $doc;
+    }
+
+    public function testConstructor() : void
     {
         $doc = new DOMDocument();
         $doc->loadXML('<root/>');
@@ -18,7 +28,7 @@ class XmlToArrayTest extends TestCase
         $this->assertSame(['root' => ''], $xmlToArray->toArray());
     }
 
-    public function testArray()
+    public function testConvertArray() : void
     {
         $array = [
             'root' => [
@@ -34,11 +44,11 @@ class XmlToArrayTest extends TestCase
                 ],
             ],
         ];
-        $result = XmlToArray::fileToArray(__DIR__ . '/_res/array.xml');
-        $this->assertSame($array, $result);
+        $xmlToArray = new XmlToArray($this->domFromFile(__DIR__ . '/_files/array.xml'));
+        $this->assertSame($array, $xmlToArray->toArray());
     }
 
-    public function testAttributes()
+    public function testConvertAttributes() : void
     {
         $attributes = [
             'root' => [
@@ -51,11 +61,12 @@ class XmlToArrayTest extends TestCase
                 ],
             ],
         ];
-        $result = XmlToArray::fileToArray(__DIR__ . '/_res/attributes.xml');
-        $this->assertSame($attributes, $result);
+
+        $xmlToArray = new XmlToArray($this->domFromFile(__DIR__ . '/_files/attributes.xml'));
+        $this->assertSame($attributes, $xmlToArray->toArray());
     }
 
-    public function testCdata()
+    public function testConvertCdata() : void
     {
         $cdata = [
             'root' => [
@@ -65,11 +76,12 @@ class XmlToArrayTest extends TestCase
                 ],
             ],
         ];
-        $result = XmlToArray::fileToArray(__DIR__ . '/_res/cdata.xml');
-        $this->assertSame($cdata, $result);
+
+        $xmlToArray = new XmlToArray($this->domFromFile(__DIR__ . '/_files/cdata.xml'));
+        $this->assertSame($cdata, $xmlToArray->toArray());
     }
 
-    public function testSimple()
+    public function testSimple() : void
     {
         $simple = [
             'root' => [
@@ -79,21 +91,52 @@ class XmlToArrayTest extends TestCase
                 ],
             ],
         ];
-        $result = XmlToArray::fileToArray(__DIR__ . '/_res/simple.xml');
+
+        $xmlToArray = new XmlToArray($this->domFromFile(__DIR__ . '/_files/simple.xml'));
+        $this->assertSame($simple, $xmlToArray->toArray());
+    }
+
+    public function testStringToArray() : void
+    {
+        $simple = [
+            'root' => [
+                'good_guy' => [
+                    'name' => 'Luke Skywalker',
+                    'weapon' => 'Lightsaber',
+                ],
+            ],
+        ];
+
+        $result = XmlToArray::stringToArray(file_get_contents(__DIR__ . '/_files/simple.xml'));
         $this->assertSame($simple, $result);
     }
 
-    public function testStringToArrayThrowsException()
+    public function testFileToArray() : void
+    {
+        $simple = [
+            'root' => [
+                'good_guy' => [
+                    'name' => 'Luke Skywalker',
+                    'weapon' => 'Lightsaber',
+                ],
+            ],
+        ];
+
+        $result = XmlToArray::fileToArray(__DIR__ . '/_files/simple.xml');
+        $this->assertSame($simple, $result);
+    }
+
+    public function testStringToArrayThrowsDomException() : void
     {
         $this->expectException(DOMException::class);
         $this->expectExceptionMessageMatches('/^start tag expected/i');
         XmlToArray::stringToArray('foo');
     }
 
-    public function testFileToArrayThrowsException()
+    public function testFileToArrayThrowsDomException() : void
     {
         $this->expectException(DOMException::class);
         $this->expectExceptionMessageMatches('/^failed to load external entity/i');
-        XmlToArray::fileToArray(__DIR__ . '/_res/non-exist.xml');
+        XmlToArray::fileToArray(__DIR__ . '/_files/non-exist.xml');
     }
 }

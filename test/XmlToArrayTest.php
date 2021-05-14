@@ -6,7 +6,7 @@ use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use VaclavVanik\XmlToArray\XmlToArray;
 
-class ArrayToXmlTest extends TestCase
+class XmlToArrayTest extends TestCase
 {
     public function testConstructor()
     {

@@ -3,6 +3,7 @@
 namespace VaclavVanikTest\XmlToArray;
 
 use DOMDocument;
+use DOMException;
 use PHPUnit\Framework\TestCase;
 use VaclavVanik\XmlToArray\XmlToArray;
 
@@ -80,5 +81,19 @@ class XmlToArrayTest extends TestCase
         ];
         $result = XmlToArray::fileToArray(__DIR__ . '/_res/simple.xml');
         $this->assertSame($simple, $result);
+    }
+
+    public function testStringToArrayThrowsException()
+    {
+        $this->expectException(DOMException::class);
+        $this->expectExceptionMessageMatches('/^start tag expected/i');
+        XmlToArray::stringToArray('foo');
+    }
+
+    public function testFileToArrayThrowsException()
+    {
+        $this->expectException(DOMException::class);
+        $this->expectExceptionMessageMatches('/^failed to load external entity/i');
+        XmlToArray::fileToArray(__DIR__ . '/_res/non-exist.xml');
     }
 }

@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace VaclavVanik\XmlToArray;
 
+use DOMCdataSection;
 use DOMDocument;
+use DOMElement;
 use DOMException;
-use DOMNode;
+use DOMNodeList;
+use DOMText;
 use LibXMLError;
 
+use function array_unique;
 use function count;
-use function in_array;
 use function libxml_use_internal_errors;
 use function libxml_clear_errors;
 use function libxml_get_last_error;
 use function sprintf;
 use function trim;
-
-use const XML_CDATA_SECTION_NODE;
-use const XML_TEXT_NODE;
 
 class XmlToArray
 {
@@ -26,6 +26,10 @@ class XmlToArray
      * @var DOMDocument
      */
     private $doc;
+
+    private const KEY_ATTRIBUTES = '@attributes';
+
+    private const KEY_VALUE = '@value';
 
     public function __construct(DOMDocument $doc)
     {
@@ -39,7 +43,7 @@ class XmlToArray
         string $string,
         string $xmlEncoding = 'utf-8',
         string $xmlVersion = '1.0'
-    ) : array {
+    ): array {
         $previousInternalErrors = libxml_use_internal_errors(true);
 
         try {
@@ -64,7 +68,7 @@ class XmlToArray
         string $file,
         string $xmlEncoding = 'utf-8',
         string $xmlVersion = '1.0'
-    ) : array {
+    ): array {
         $previousInternalErrors = libxml_use_internal_errors(true);
 
         try {
@@ -85,9 +89,9 @@ class XmlToArray
     /**
      * @throws DOMException
      */
-    private static function throwException() : void
+    private static function throwException(): void
     {
-        $toErrorMessage = function (LibXMLError $error) : string {
+        $toErrorMessage = function (LibXMLError $error): string {
             $format = '%s on line: %d, column: %d';
             return sprintf($format, trim($error->message), $error->line, $error->column);
         };
@@ -98,56 +102,74 @@ class XmlToArray
         throw new DOMException($toErrorMessage($libXmlError), $libXmlError->code);
     }
 
-    public function toArray() : array
+    private function isArrayElement(DOMNodeList $childNodes): bool
     {
-        $toArray = function ($root) use (&$toArray) {
-            $result = [];
+        $names = [];
+        foreach ($childNodes as $childNode) {
+            if ($childNode instanceof DOMElement) {
+                $names[] = $childNode->nodeName;
+            }
+        }
 
-            $nodeTypes = [
-                XML_TEXT_NODE,
-                XML_CDATA_SECTION_NODE,
+        return count($names) > 1 && count(array_unique($names)) === 1;
+    }
+
+    private function convertDomAttributes(DOMElement $element): array
+    {
+        if ($element->hasAttributes()) {
+            $attributes = [];
+            foreach ($element->attributes as $attr) {
+                $attributes[$attr->name] = $attr->value;
+            }
+
+            return [
+                self::KEY_ATTRIBUTES => $attributes,
             ];
+        }
 
-            if ($root instanceof DOMNode && $root->hasAttributes()) {
-                foreach ($root->attributes as $attr) {
-                    $result['@attributes'][$attr->name] = $attr->value;
-                }
+        return [];
+    }
+
+    private function convertDomElement(DOMElement $element)
+    {
+        $result = $this->convertDomAttributes($element);
+
+        $isGroup = $this->isArrayElement($element->childNodes);
+
+        foreach ($element->childNodes as $childNode) {
+            if ($childNode instanceof DOMCdataSection) {
+                $result[self::KEY_VALUE] = $childNode->data;
+                continue;
             }
 
-            if ($root instanceof DOMNode && $root->hasChildNodes()) {
-                $children = $root->childNodes;
-
-                if ($children->length === 1) {
-                    $child = $children->item(0);
-                    if (in_array($child->nodeType, $nodeTypes, true)) {
-                        $result['_value'] = $child->nodeValue;
-                        return count($result) === 1
-                            ? $result['_value']
-                            : $result;
-                    }
-                }
-
-                $groups = [];
-                foreach ($children as $child) {
-                    if (in_array($child->nodeType, $nodeTypes, true) && ! trim($child->nodeValue)) {
-                        continue;
-                    }
-
-                    if (! isset($result[$child->nodeName])) {
-                        $result[$child->nodeName] = $toArray($child);
-                    } else {
-                        if (! isset($groups[$child->nodeName])) {
-                            $result[$child->nodeName] = [$result[$child->nodeName]];
-                            $groups[$child->nodeName] = 1;
-                        }
-                        $result[$child->nodeName][] = $toArray($child);
-                    }
-                }
+            if ($childNode instanceof DOMText) {
+                $result[self::KEY_VALUE] = $childNode->textContent;
+                continue;
             }
 
-            return $result ?: '';
-        };
+            if ($childNode instanceof DOMElement) {
+                if ($isGroup) {
+                    $result[$childNode->nodeName][] = $this->convertDomElement($childNode);
+                    continue;
+                }
 
-        return (array) $toArray($this->doc);
+                $result[$childNode->nodeName] = $this->convertDomElement($childNode);
+            }
+        }
+
+        if (isset($result[self::KEY_VALUE]) && trim($result[self::KEY_VALUE]) !== '') {
+            return $result[self::KEY_VALUE];
+        }
+
+        unset($result[self::KEY_VALUE]);
+
+        return count($result) > 0 ? $result : '';
+    }
+
+    public function toArray(): array
+    {
+        return [
+            $this->doc->documentElement->nodeName => $this->convertDomElement($this->doc->documentElement),
+        ];
     }
 }

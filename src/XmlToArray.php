@@ -42,14 +42,16 @@ class XmlToArray
     ) : array {
         $previousInternalErrors = libxml_use_internal_errors(true);
 
-        $doc = new DOMDocument($xmlVersion, $xmlEncoding);
-        $result = $doc->loadXML($string);
+        try {
+            $doc = new DOMDocument($xmlVersion, $xmlEncoding);
+            $result = $doc->loadXML($string);
 
-        if ($result === false) {
-            self::throwException($previousInternalErrors);
+            if ($result === false) {
+                self::throwException();
+            }
+        } finally {
+            libxml_use_internal_errors($previousInternalErrors);
         }
-
-        libxml_use_internal_errors($previousInternalErrors);
 
         $xml = new static($doc);
         return $xml->toArray();
@@ -65,14 +67,16 @@ class XmlToArray
     ) : array {
         $previousInternalErrors = libxml_use_internal_errors(true);
 
-        $doc = new DOMDocument($xmlVersion, $xmlEncoding);
-        $result = $doc->load($file);
+        try {
+            $doc = new DOMDocument($xmlVersion, $xmlEncoding);
+            $result = $doc->load($file);
 
-        if ($result === false) {
-            self::throwException($previousInternalErrors);
+            if ($result === false) {
+                self::throwException();
+            }
+        } finally {
+            libxml_use_internal_errors($previousInternalErrors);
         }
-
-        libxml_use_internal_errors($previousInternalErrors);
 
         $xml = new static($doc);
         return $xml->toArray();
@@ -81,7 +85,7 @@ class XmlToArray
     /**
      * @throws DOMException
      */
-    private static function throwException(bool $previousInternalErrors) : void
+    private static function throwException() : void
     {
         $toErrorMessage = function (LibXMLError $error) : string {
             $format = '%s on line: %d, column: %d';
@@ -89,9 +93,7 @@ class XmlToArray
         };
 
         $libXmlError = libxml_get_last_error();
-
         libxml_clear_errors();
-        libxml_use_internal_errors($previousInternalErrors);
 
         throw new DOMException($toErrorMessage($libXmlError), $libXmlError->code);
     }

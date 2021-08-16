@@ -14,17 +14,15 @@ use LibXMLError;
 
 use function array_unique;
 use function count;
-use function libxml_use_internal_errors;
 use function libxml_clear_errors;
 use function libxml_get_last_error;
+use function libxml_use_internal_errors;
 use function sprintf;
 use function trim;
 
 class XmlToArray
 {
-    /**
-     * @var DOMDocument
-     */
+    /** @var DOMDocument */
     private $doc;
 
     private const KEY_ATTRIBUTES = '@attributes';
@@ -36,9 +34,7 @@ class XmlToArray
         $this->doc = $doc;
     }
 
-    /**
-     * @throws DOMException if DOM load failed
-     */
+    /** @throws DOMException */
     public static function stringToArray(
         string $string,
         string $xmlEncoding = 'utf-8',
@@ -58,12 +54,11 @@ class XmlToArray
         }
 
         $xml = new static($doc);
+
         return $xml->toArray();
     }
 
-    /**
-     * @throws DOMException if DOM load failed
-     */
+    /** @throws DOMException */
     public static function fileToArray(
         string $file,
         string $xmlEncoding = 'utf-8',
@@ -83,16 +78,23 @@ class XmlToArray
         }
 
         $xml = new static($doc);
+
         return $xml->toArray();
     }
 
-    /**
-     * @throws DOMException
-     */
+    public function toArray(): array
+    {
+        return [
+            $this->doc->documentElement->nodeName => $this->convertDomElement($this->doc->documentElement),
+        ];
+    }
+
+    /** @throws DOMException */
     private static function throwException(): void
     {
-        $toErrorMessage = function (LibXMLError $error): string {
+        $toErrorMessage = static function (LibXMLError $error): string {
             $format = '%s on line: %d, column: %d';
+
             return sprintf($format, trim($error->message), $error->line, $error->column);
         };
 
@@ -105,10 +107,13 @@ class XmlToArray
     private function isArrayElement(DOMNodeList $childNodes): bool
     {
         $names = [];
+
         foreach ($childNodes as $childNode) {
-            if ($childNode instanceof DOMElement) {
-                $names[] = $childNode->nodeName;
+            if (! ($childNode instanceof DOMElement)) {
+                continue;
             }
+
+            $names[] = $childNode->nodeName;
         }
 
         return count($names) > 1 && count(array_unique($names)) === 1;
@@ -118,18 +123,18 @@ class XmlToArray
     {
         if ($element->hasAttributes()) {
             $attributes = [];
+
             foreach ($element->attributes as $attr) {
                 $attributes[$attr->name] = $attr->value;
             }
 
-            return [
-                self::KEY_ATTRIBUTES => $attributes,
-            ];
+            return [self::KEY_ATTRIBUTES => $attributes];
         }
 
         return [];
     }
 
+    /** @return array|string */
     private function convertDomElement(DOMElement $element)
     {
         $result = $this->convertDomAttributes($element);
@@ -147,14 +152,16 @@ class XmlToArray
                 continue;
             }
 
-            if ($childNode instanceof DOMElement) {
-                if ($isGroup) {
-                    $result[$childNode->nodeName][] = $this->convertDomElement($childNode);
-                    continue;
-                }
-
-                $result[$childNode->nodeName] = $this->convertDomElement($childNode);
+            if (! ($childNode instanceof DOMElement)) {
+                continue;
             }
+
+            if ($isGroup) {
+                $result[$childNode->nodeName][] = $this->convertDomElement($childNode);
+                continue;
+            }
+
+            $result[$childNode->nodeName] = $this->convertDomElement($childNode);
         }
 
         if (isset($result[self::KEY_VALUE]) && trim($result[self::KEY_VALUE]) !== '') {
@@ -164,12 +171,5 @@ class XmlToArray
         unset($result[self::KEY_VALUE]);
 
         return count($result) > 0 ? $result : '';
-    }
-
-    public function toArray(): array
-    {
-        return [
-            $this->doc->documentElement->nodeName => $this->convertDomElement($this->doc->documentElement),
-        ];
     }
 }

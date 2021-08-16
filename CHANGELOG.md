@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 1.3.0 - 2021-08-16
+
+### Added
+
+- PHP Unit moved under tools directory
+- PHP Code Sniffer added under tools directory
+- Make file added
+
+### Fixed
+
+- CS fix
+- Checking for array elements
+
 ## 1.2.0 - 2021-05-14
 
 ### Added

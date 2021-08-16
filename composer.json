@@ -24,8 +24,7 @@
     "ext-libxml": "*"
   },
   "require-dev": {
-    "laminas/laminas-coding-standard": "^2.1.4",
-    "phpunit/phpunit": "^9.5.0"
+
   },
   "autoload": {
     "psr-4": {
@@ -34,22 +33,12 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "VaclavVanikTest\\XmlToArray\\": "test/"
+      "VaclavVanikTest\\XmlToArray\\": "test/unit"
     }
   },
   "extra": {
     "branch-alias": {
       "dev-master": "1.2.x-dev"
     }
-  },
-  "scripts": {
-    "check": [
-      "@cs-check",
-      "@test"
-    ],
-    "cs-check": "phpcs",
-    "cs-fix": "phpcbf",
-    "test": "vendor/bin/phpunit --colors=always",
-    "test-coverage-html": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html reports/codecoverage"
   }
 }

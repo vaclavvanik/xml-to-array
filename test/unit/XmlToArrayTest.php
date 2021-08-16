@@ -9,7 +9,7 @@ use VaclavVanik\XmlToArray\XmlToArray;
 
 use function file_get_contents;
 
-class XmlToArrayTest extends TestCase
+final class XmlToArrayTest extends TestCase
 {
     private function domFromFile(string $file) : DOMDocument
     {

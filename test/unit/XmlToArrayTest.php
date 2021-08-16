@@ -26,6 +26,7 @@ final class XmlToArrayTest extends TestCase
     {
         $array = [
             'root' => [
+                'name' => 'guy collection',
                 'good_guy' => [
                     [
                         'name' => 'Luke Skywalker',
@@ -34,6 +35,16 @@ final class XmlToArrayTest extends TestCase
                     [
                         'name' => 'Gandalf',
                         'weapon' => 'Staff',
+                    ],
+                ],
+                'bad_guy' => [
+                    [
+                        'name' => 'Saruman',
+                        'weapon' => 'Staff',
+                    ],
+                    [
+                        'name' => 'Sauron',
+                        'weapon' => 'Ring',
                     ],
                 ],
             ],

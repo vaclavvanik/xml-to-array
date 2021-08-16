@@ -8,11 +8,9 @@ use DOMCdataSection;
 use DOMDocument;
 use DOMElement;
 use DOMException;
-use DOMNodeList;
 use DOMText;
 use LibXMLError;
 
-use function array_unique;
 use function count;
 use function libxml_clear_errors;
 use function libxml_get_last_error;
@@ -104,21 +102,6 @@ class XmlToArray
         throw new DOMException($toErrorMessage($libXmlError), $libXmlError->code);
     }
 
-    private function isArrayElement(DOMNodeList $childNodes): bool
-    {
-        $names = [];
-
-        foreach ($childNodes as $childNode) {
-            if (! ($childNode instanceof DOMElement)) {
-                continue;
-            }
-
-            $names[] = $childNode->nodeName;
-        }
-
-        return count($names) > 1 && count(array_unique($names)) === 1;
-    }
-
     private function convertDomAttributes(DOMElement $element): array
     {
         if ($element->hasAttributes()) {
@@ -134,12 +117,38 @@ class XmlToArray
         return [];
     }
 
+    /**
+     * @return array<string,int>
+     */
+    private function childNamesCount(DOMElement $element): array
+    {
+        $names = [];
+
+        foreach ($element->childNodes as $childNode) {
+            if (! ($childNode instanceof DOMElement)) {
+                continue;
+            }
+
+            if (! isset($names[$childNode->nodeName])) {
+                $names[$childNode->nodeName] = 0;
+            }
+
+            ++$names[$childNode->nodeName];
+        }
+
+        return $names;
+    }
+
     /** @return array|string */
     private function convertDomElement(DOMElement $element)
     {
         $result = $this->convertDomAttributes($element);
 
-        $isGroup = $this->isArrayElement($element->childNodes);
+        $childNames = $this->childNamesCount($element);
+
+        $isArrayElement = static function (string $name) use ($childNames) : bool {
+            return $childNames[$name] > 1;
+        };
 
         foreach ($element->childNodes as $childNode) {
             if ($childNode instanceof DOMCdataSection) {
@@ -156,7 +165,11 @@ class XmlToArray
                 continue;
             }
 
-            if ($isGroup) {
+            if ($isArrayElement($childNode->nodeName)) {
+                if (! isset($result[$childNode->nodeName])) {
+                    $result[$childNode->nodeName] = [];
+                }
+
                 $result[$childNode->nodeName][] = $this->convertDomElement($childNode);
                 continue;
             }

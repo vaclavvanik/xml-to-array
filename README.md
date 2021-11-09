@@ -82,10 +82,10 @@ $xmlToArray = new XmlToArray($doc);
 $result = $xmlToArray->toArray();
 ```
 
-## Testing
+## Run check - coding standards and php-unit
 
 ```bash
-vendor/bin/phpunit
+make check
 ```
 
 ## Changelog
